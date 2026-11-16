@@ -15,17 +15,17 @@ st.set_page_config(page_title="Acessos à Wikipédia · música brasileira", pag
 # Legendas e links com contraste de leitura (o cinza padrão fica abaixo de 4,5:1) e texto
 # corrido com no máximo ~75 caracteres por linha. Tabelas e gráficos não são afetados.
 st.markdown("""<style>
-[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] * { color: #4a4f57 !important; opacity: 1 !important; }
-[data-testid="stCaptionContainer"] a, [data-testid="stMarkdownContainer"] a { color: #0b5e53 !important; opacity: 1 !important; }
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] * { color: #a9b2ae !important; opacity: 1 !important; }
+[data-testid="stCaptionContainer"] a, [data-testid="stMarkdownContainer"] a { color: #6fd0c0 !important; opacity: 1 !important; }
 [data-testid="stMarkdownContainer"] p, [data-testid="stCaptionContainer"] p { max-width: 62ch; text-wrap: pretty; }
-:focus-visible { outline: 2px solid #0F7B6C !important; outline-offset: 2px; }
+:focus-visible { outline: 2px solid #3FB5A2 !important; outline-offset: 2px; }
 </style>""", unsafe_allow_html=True)
 # O Streamlit marca toda página como inglês; leitor de tela precisa saber que é pt-BR (WCAG 3.1.1).
 components.html("<script>window.parent.document.documentElement.lang = 'pt-BR'</script>", height=0)
 
 # Uma cor por gênero no app inteiro. Vermelho fica de fora: aqui ele leria como alerta.
-CORES = {"Sertanejo": "#C27C0E", "Funk e pop": "#C2416B", "MPB": "#0F7B6C", "Rap e trap": "#2F5BB7"}
-STATUS_FUNDO = {"acima do normal": "rgba(15,123,108,.22)", "abaixo do normal": "rgba(194,124,14,.25)"}
+CORES = {"Sertanejo": "#E0A23A", "Funk e pop": "#E0668F", "MPB": "#3FB5A2", "Rap e trap": "#6E95E6"}
+STATUS_FUNDO = {"acima do normal": "rgba(63,181,162,.28)", "abaixo do normal": "rgba(224,162,58,.28)"}
 LIMITE_PASSOS_SQL = 20_000_000  # passos internos do SQLite antes de interromper (~1 s)
 LIMITE_LINHAS_SQL = 1_000
 NUM = "localized"  # separador de milhar conforme o idioma do navegador

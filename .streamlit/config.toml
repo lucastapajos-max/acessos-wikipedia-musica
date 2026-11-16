@@ -1,5 +1,8 @@
 [theme]
-base = "light"
-primaryColor = "#0F7B6C"
+base = "dark"
+primaryColor = "#3FB5A2"
+backgroundColor = "#11161A"
+secondaryBackgroundColor = "#181F24"
+textColor = "#E8EBE7"
 font = "IBM Plex Sans:https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
 headingFont = "IBM Plex Sans:https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
