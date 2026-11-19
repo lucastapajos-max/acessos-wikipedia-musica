@@ -35,7 +35,7 @@ def test_welch_detecta_diferenca_e_respeita_minimo():
 def test_sql_semanal_roda_no_banco():
     sem = analise.consultar(analise.SQL_SEMANAL)
     assert {"banco", "grupo", "semana", "views"} <= set(sem.columns)
-    assert pd.to_datetime(sem["semana"]).dt.dayofweek.eq(0).all()  # toda semana começa na segunda
+    assert pd.to_datetime(sem["semana"]).dt.day_of_week.eq(0).all()  # toda semana começa na segunda
 
 
 def test_picos_conta_dia_sem_registro_como_zero():
@@ -51,3 +51,11 @@ def test_faixa_rolante_bate_com_faixa_normal():
     band = analise.faixa_rolante(views)
     unica = analise.faixa_normal(views.iloc[:-1], views.iloc[-1])
     assert round(band["lim_sup"].iloc[-1], 6) == round(unica["lim_sup"], 6)
+
+
+def test_picos_ignora_verbete_quase_sem_leitura():
+    views = np.random.default_rng(0).integers(0, 3, 120)  # 0 a 2 acessos por dia
+    views[100] = 50  # salto enorme em vezes, mas sobre quase nada: ruído, não evento
+    d = pd.DataFrame({"banco": "X", "grupo": "G", "views": views,
+                      "data": pd.date_range("2025-01-01", periods=120).strftime("%Y-%m-%d")})
+    assert analise.picos(d).empty

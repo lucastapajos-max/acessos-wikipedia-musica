@@ -20,6 +20,7 @@ MIN_SEMANAS_FAIXA = 8   # semanas de histórico para definir o "normal"
 MIN_DIAS_PICO = 60      # dias de histórico para julgar um pico
 MIN_BANCOS = 4          # bancos por grupo para comparar grupos
 JANELA_FAIXA = 26       # semanas de histórico que definem o normal
+MIN_BASE_PICO = 5       # dia típico com menos acessos que isso não julga pico (verbete quase sem leitura)
 LIMITE_IQR = 1.5        # fora de Q1-1,5·IQR e Q3+1,5·IQR é fora do normal (critério do boxplot)
 
 # Semana de segunda a domingo. 'weekday 0' leva ao domingo; -6 dias volta à segunda.
@@ -102,7 +103,7 @@ def picos(diario, z_corte=3.5, janela=90):
             lambda x: np.median(np.abs(x - np.median(x))), raw=True).shift(1)
         z = (lv - med) / (1.4826 * mad.replace(0, np.nan))
         g = g.assign(z=z, base=np.expm1(med))
-        saida.append(g[g["z"] >= z_corte])
+        saida.append(g[(g["z"] >= z_corte) & (g["base"] >= MIN_BASE_PICO)])
     if not saida:
         return pd.DataFrame(columns=["banco", "grupo", "data", "views", "z", "base"])
     out = pd.concat(saida)
@@ -132,4 +133,5 @@ def welch(semanal, grupo_a, grupo_b, semanas=12):
             "media_a": 10 ** a.mean(), "media_b": 10 ** b.mean(),  # médias geométricas
             "razao": 10 ** (a.mean() - b.mean()), "t": float(t), "p": float(p),
             "d": float((a.mean() - b.mean()) / dp) if dp else None,
-            "semanas": len(ultimas), "significante": bool(p < 0.05)}
+            "semanas": len(ultimas), "significante": bool(p < 0.05),
+            "pontos": por_banco.reset_index()}  # um ponto por banco, a unidade do teste

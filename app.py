@@ -1,7 +1,6 @@
 """Painel: radar de atenção a bancos na Wikipédia (pageviews da Wikimedia)."""
 import sqlite3
 
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -98,7 +97,7 @@ with aba1:
                 "Escolha uma semana mais recente.")
     else:
         total = sem.loc[sem["semana"] == semana, "views"].sum()
-        hist_total = sem[sem["semana"] < semana].groupby("semana")["views"].sum().tail(26)
+        hist_total = sem[sem["semana"] < semana].groupby("semana")["views"].sum().tail(an.JANELA_FAIXA)
         bt = an.faixa_normal(hist_total, total)
         acima = radar[radar["status"] == "acima do normal"].sort_values("vs_mediana_pct", ascending=False)
         abaixo = radar[radar["status"] == "abaixo do normal"].sort_values("vs_mediana_pct")
@@ -106,7 +105,7 @@ with aba1:
                   f"**{br(total)} acessos** nos grupos escolhidos"]
         if bt:
             frases[0] += (f", {br(abs(bt['vs_mediana_pct']))}% {'acima' if bt['vs_mediana_pct'] >= 0 else 'abaixo'} "
-                          f"da mediana das 26 semanas anteriores ({bt['status']}).")
+                          f"da mediana das {an.JANELA_FAIXA} semanas anteriores ({bt['status']}).")
         else:
             frases[0] += "."
         frases.append(f"Acima do normal: {lista(acima['banco'])}." if len(acima)
@@ -123,10 +122,10 @@ with aba1:
             column_config={
                 "banco": "Banco", "grupo": "Grupo", "status": "Leitura",
                 "valor": st.column_config.NumberColumn("Acessos na semana", format=NUM),
-                "mediana": st.column_config.NumberColumn("Mediana 26 sem.", format=NUM),
+                "mediana": st.column_config.NumberColumn(f"Mediana {an.JANELA_FAIXA} sem.", format=NUM),
                 "vs_mediana_pct": st.column_config.NumberColumn("vs mediana", format="%+.0f%%"),
             })
-        st.caption("O normal de cada banco é a faixa das 26 semanas anteriores (mediana e intervalo "
+        st.caption(f"O normal de cada banco é a faixa das {an.JANELA_FAIXA} semanas anteriores (mediana e intervalo "
                    "interquartil). Fica acima do normal quem passa de Q3 + 1,5 × IQR, o critério do boxplot.")
 
         banco = st.selectbox("Série semanal de um banco", tab["banco"])
@@ -152,7 +151,7 @@ with aba2:
     if pk.empty:
         st.info("Nenhum dia atípico nos grupos escolhidos.")
     else:
-        maior = pk.iloc[0]
+        maior = pk.nlargest(1, "vezes_base").iloc[0]  # o texto fala em "vezes", então o maior é por vezes
         na_semana = pk[(pk["data"] >= pd.to_datetime(semana)) & (pk["data"] <= fim_semana)]
         resumo = (f"Maior salto do período: **{maior['banco']}** em {maior['data']:%d/%m/%Y}, "
                   f"com {br(maior['vezes_base'], 1)} vezes os acessos de um dia típico. ")
@@ -227,11 +226,7 @@ with aba3:
                 f"p-valor **{br(r['p'], 3)}** (abaixo de 0,05, a diferença dificilmente é acaso) · "
                 f"t de Welch **{br(r['t'], 2)}** · tamanho do efeito, d de Cohen, **{br(r['d'], 2)}** "
                 "(a partir de 0,8 em módulo, a diferença é considerada grande)")
-        ult = sorted(semanal["semana"].unique())[-janela:]
-        pts = (semanal[semanal["semana"].isin(ult)]
-               .assign(log=lambda d: np.log10(d["views"].clip(lower=1)))
-               .groupby(["grupo", "banco"])["log"].mean().reset_index()
-               .assign(views=lambda d: 10 ** d["log"]))
+        pts = r["pontos"].assign(views=lambda d: 10 ** d["log_views"])
         fig = px.box(pts, x="grupo", y="views", color="grupo", points="all", hover_name="banco",
                      log_y=True, color_discrete_map=CORES, category_orders={"grupo": [ga, gb]},
                      labels={"grupo": "", "views": "Acessos semanais (média geométrica, log)"},
