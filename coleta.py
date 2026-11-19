@@ -2,7 +2,7 @@
 
 Fonte: Wikimedia REST API (dados CC0, sem chave). Conta só acessos de pessoas
 (agent=user), excluindo robôs. Rodar de novo é seguro: as linhas são substituídas,
-e artistas que saíram de artistas.csv saem do banco.
+e bancos que saíram de bancos.csv saem do banco de dados.
 
 Uso: python coleta.py [AAAA-MM-DD início]
 """
@@ -22,7 +22,7 @@ DB = RAIZ / "data" / "atencao.db"
 API = ("https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
        "pt.wikipedia/all-access/user/{artigo}/daily/{ini}/{fim}")
 # A Wikimedia pede um User-Agent que identifique o cliente.
-HEADERS = {"User-Agent": "portfolio-atencao-musica/1.0 (projeto de estudo)"}
+HEADERS = {"User-Agent": "portfolio-radar-atencao-bancos/1.0 (projeto de estudo)"}
 
 
 def ultimo_domingo(hoje=None):
@@ -50,22 +50,22 @@ def baixar(url):
 def coletar(inicio="2024-01-01"):
     fim = ultimo_domingo()
     DB.parent.mkdir(exist_ok=True)
-    with open(RAIZ / "artistas.csv", encoding="utf-8") as f:
-        artistas = list(csv.DictReader(f))
+    with open(RAIZ / "bancos.csv", encoding="utf-8") as f:
+        bancos = list(csv.DictReader(f))
     con = sqlite3.connect(DB)
     con.executescript((RAIZ / "schema.sql").read_text(encoding="utf-8"))
     with con:  # uma transação só: ou a semana entra inteira, ou nada muda
-        artigos = [a["artigo"] for a in artistas]
+        artigos = [a["artigo"] for a in bancos]
         marcas = ",".join("?" * len(artigos))
         con.execute(f"DELETE FROM pageviews WHERE artigo NOT IN ({marcas})", artigos)
-        con.execute(f"DELETE FROM artistas WHERE artigo NOT IN ({marcas})", artigos)
-        con.executemany("INSERT OR REPLACE INTO artistas VALUES (:artigo, :artista, :genero)", artistas)
-        for a in artistas:
+        con.execute(f"DELETE FROM bancos WHERE artigo NOT IN ({marcas})", artigos)
+        con.executemany("INSERT OR REPLACE INTO bancos VALUES (:artigo, :banco, :grupo)", bancos)
+        for a in bancos:
             url = API.format(artigo=quote(a["artigo"], safe=""),
                              ini=inicio.replace("-", ""), fim=fim.strftime("%Y%m%d"))
             linhas = linhas_da_api(a["artigo"], baixar(url))
             con.executemany("INSERT OR REPLACE INTO pageviews VALUES (?, ?, ?)", linhas)
-            print(f"{a['artista']:<22} {len(linhas):>5} dias")
+            print(f"{a['banco']:<22} {len(linhas):>5} dias")
             time.sleep(1)
     con.close()
 
